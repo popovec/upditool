@@ -1,0 +1,149 @@
+NVM Programming, differences:
+
+tiny0:
+------
+If the device is unlocked, it is possible to write directly to the NVM Controller using the UPDI. This will lead to unpredictable code execution if the CPU is active during the NVM programming. To avoid this, the following NVM Programming sequence should be executed.
+
+1.Follow the Chip erase procedure as described in Chip Erase. If the part is already unlocked, this point can be skipped.
+2.Enter the NVMPROG KEY by using the KEY instruction. See Table 2 for the NVMPROG signature.
+3.Optional: Read the NVMPROG field in the KEY_STATUS register to see that the KEY has been activated.
+4.Write the Reset signature into the ASI_RESET_REQ register. This will issue a System Reset.
+5.Write 0x00 to the Reset signature in the ASI_RESET_REQ register to clear the System Reset.
+6.Read NVMPROG in ASI_SYS_STATUS.
+7.NVM Programming can start when NVMPROG == 1 in the ASI_SYS_STATUS register. If NVMPROG == 0, go to point 6 again.
+8.Write data to NVM through the UPDI.
+9.Write the Reset signature into the ASI_RESET_REQ register. This will issue a System Reset.
+10.Write 0x00 to the Reset signature in ASI_RESET_REQ register to clear the System Reset.
+11.Programming is complete.
+
+
+tiny1
+-----
+1.Follow the Chip Erase procedure as described in Chip Erase. If the part is already unlocked, this point can be skipped.
+2.Enter the NVMPROG KEY by using the KEY instruction. See Table 2 for the NVMPROG signature.
+3.Optional: Read the NVMPROG field in the KEY_STATUS register to see that the KEY has been activated.
+4.Write the Reset signature into the ASI_RESET_REQ register. This will issue a System Reset.
+5.Write 0x00 to the Reset signature in the ASI_RESET_REQ register to clear the System Reset.
+6.Read NVMPROG in ASI_SYS_STATUS.
+7.NVM Programming can start when NVMPROG == 1 in the ASI_SYS_STATUS register. If NVMPROG == 0, go to point 6 again.
+8.Write data to NVM through the UPDI.
+9.Write the Reset signature into the ASI_RESET_REQ register. This will issue a System Reset.
+10.Write 0x00 to the Reset signature in the ASI_RESET_REQ register to clear the System Reset.
+11.Programming is complete.
+
+
+mega0	(mega4808,4809, 3208, 3209)
+-----
+
+1. Follow the Chip erase procedure as described in Chip Erase. If the part is already unlocked, this point can be skipped.
+2. Enter the NVMPROG KEY by using the KEY instruction. See Table 30-6 for the NVMPROG signature.
+3. Optional: Read the NVMPROG field in the KEY_STATUS register to see that the KEY has been activated.
+4. Write the Reset signature into the ASI_RESET_REQ register. This will issue a System Reset.
+5. Write 0x00 to the Reset signature in the ASI_RESET_REQ register to clear the System Reset.
+6. Read NVMPROG in ASI_SYS_STATUS.
+7. NVM Programming can start when NVMPROG == 1 in the ASI_SYS_STATUS register. If NVMPROG == 0, go to point 6 again.
+8. Write data to NVM through the UPDI.
+9. Write the Reset signature into the ASI_RESET_REQ register. This will issue a System Reset.
+10. Write 0x00 to the Reset signature in ASI_RESET_REQ register to clear the System Reset.
+11. Programming is complete.
+
+
+AVR	(AVR128DA, AVR128DB)
+---
+1. Follow the chip erase procedure, as described in 35.3.7.1 Chip Erase. If the part is already unlocked, this point can be skipped.
+2. Enter the NVMPROG key by using the KEY instruction. See Table 35-5 for the NVMPROG signature.
+3. Optional: Read the NVM Programming Key Status (NVMPROG) bit from the ASI Key Status (UPDI.KEY_STATUS) register to see if the key has been activated.
+4. Write the signature to the Reset Request (RSTREQ) bit in the ASI Reset Request (UPDI.ASI_RESET_REQ) register. This will issue a System Reset.
+5. Write 0x00 to the ASI Reset Request (UPDI.ASI_RESET_REQ) register to clear the System Reset.
+6. Read the NVM Programming Key Status (NVMPROG) bit from the ASI System Status (UPDI.ASI_SYS_STATUS) register.
+7.  NVM Programming can start when the NVMPROG bit is ‘1’. If the NVMPROG bit is ‘0’, return to step 6.
+8.  Write data to NVM through the UPDI.
+9.  Write the signature to the Reset Request (RSTREQ) bit in the ASI Reset Request (UPDI.ASI_RESET_REQ) register. This will issue a System Reset.
+10. Write 0x00 to the ASI Reset Request (UPDI.ASI_RESET_REQ) register to clear the System Reset.
+11. Programming is complete.
+
+
+
+Some differences (RESET and NVM init..) megaAVR 4808 and AVR128DA32
+
+mega4808:
+
+ASI_KEY_STATUS = 0x00 
+ASI_SYS_STATUS = 0x82
+- do system reset (ASI_RESET_REQ <- 0x59, ASI_RESET_REQ <- 0)
+ASI_KEY_STATUS = 0x00 
+ASI_SYS_STATUS = 0x01
+- send key (optionally wait for bit in ASI_KEY_STATUS)
+ASI_KEY_STATUS = 0x10 
+ASI_SYS_STATUS = 0x01
+- do system reset (ASI_RESET_REQ <- 0x59, ASI_RESET_REQ <- 0)
+ASI_KEY_STATUS = 0x10 
+ASI_SYS_STATUS = 0x01
+- wait NV activation
+ASI_KEY_STATUS = 0x00 
+ASI_SYS_STATUS = 0x08
+
+
+avr128DA32:
+
+ASI_KEY_STATUS = 0x00 
+ASI_SYS_STATUS = 0x82
+- do system reset (ASI_RESET_REQ <- 0x59, ASI_RESET_REQ <- 0)
+ASI_KEY_STATUS = 0x00 
+ASI_SYS_STATUS = 0x82
+- send key (optionally wait for bit in ASI_KEY_STATUS)
+ASI_KEY_STATUS = 0x10 
+ASI_SYS_STATUS = 0x82
+- do system reset (ASI_RESET_REQ <- 0x59, ASI_RESET_REQ <- 0)
+ASI_KEY_STATUS = 0x00 
+ASI_SYS_STATUS = 0x82
+- wait NVM activation (bit 3 in ASI_SYS_STATUS)
+ASI_KEY_STATUS = 0x00 
+ASI_SYS_STATUS = 0x08
+
+
+From https://www.avrfreaks.net/forum/which-updi, from REV A datacheet for ATtiny417 / ATtiny814 / ATtiny816 / ATtiny817
+
+bit 1 in ASI_SYS_STATUS  "BOOTDONE"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This bit is set when the CPU is done with the BOOT sequence. The UPDI will
+not have regular access to the ACC layer until this bit is set.
+
+
+KEYS:
+^^^^^
+
+Chiperase     0x4E564D4572617365 64bit
+OCD           0x4F43442020202020 64bit
+NVMPROG       0x4E564D50726F6720 64bit
+USERROW-Write 0x4E564D5573267465 64bit
+2-Wire Mode   0x5044493A41325720 64bit
+
+
+OCD - Activate On Chip Debug features. (on unlocked chip)
+      (disable by 'UPDI reset' or 'UPDI disable')
+
+To open up for debug features like single stepping and breakpoints, the OCD KEY must be correctly
+decoded. The following steps must be followed to activate OCD features.
+ •     Enter the OCD KEY by using the KEY instruction. See Table 34-6 for the OCD signature.
+ •     Optional Read out the OCD bit in the ASI KEY Status register (UPDI.ASI_KEY_STATUS) to se
+       that the OCD KEY is successfully activated.
+After the OCD KEY is successfully decoded, the UPDI have full access to OCD features.
+Note: The device must be unlocked by a successful Chiperase before any debug operations can be
+done, even with the OCD KEY decoded.
+
+
+Bit 1 – OCD: On-Chip Debug Key Status
+This bit is set to '1' if the OCD KEY is successfully decoded and active. Otherwise this bit reads as zero.
+
+
+SYCFG registers (base 0xf00)
+
+00 - reserved
+01 - REVID  bits 7..4 major, bits 3..0 minor
+02 - EXTBRK
+      bit 2 RESTART
+      bit 1 HALT
+      bit 0 ENABLE
+
+reg 02 is device dependent.

@@ -1,0 +1,17 @@
+Source: upditool
+Section: unknown
+Priority: optional
+Maintainer: popovec <popovec.peter@gmail.com>
+Build-Depends: debhelper (>= 11)
+Standards-Version: 4.1.3
+Homepage: https://github.com/popovec/upditool
+#Vcs-Browser: https://salsa.debian.org/debian/upditool
+#Vcs-Git: https://salsa.debian.org/debian/upditool.git
+
+Package: upditool
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: tool for flashing microchip devices over UPDI interface
+ Command line utility for devices withc UPDI interface. Allow read/write
+ flash/eeprom/userrow and other memory location in michrochip devices
+ support for mega0 and D series (AVR128DA, mega4808, mega4809...)

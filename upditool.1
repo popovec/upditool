@@ -1,0 +1,178 @@
+.Dd DATE Sun 13 Sep 2020
+.Os
+.Dt UPDITOOL
+.Sh NAME
+.Nm upditool
+.Nd driver program for read/write Microchip UPDI based devices using ``usb-serial programmer''
+.Sh SYNOPSIS
+.Nm
+.Fl p Ar partno
+.Fl P Ar port
+.Op Fl b Ar baudrate
+.Op Fl D
+.Op Fl e
+.Op Fl F
+.Op Fl U Ar memtype:op:filename:filefmt
+.Op Fl V
+.Sh DESCRIPTION
+.Nm upditool
+is a program for read/write memories in Microchip microcontrollers over UPDI
+interface.
+
+.Nm upditool
+
+Supports USB-SERIAL TTL adapter as programmer. Several types of USB
+to serial converter can be used, here connection schematics:
+.nf
+  PL2303HX UART
+  CP2102/CP2109 UART
+  CH340 UART
+                                     Microchip UPDI device
+      +---------+                   +--------------------+
+      |  3.3/5V +-------------------+ Vcc                |
+ +----|         |                   |                    |
+ | U  |      RX +--------------+----+ UPDI               |
+ | S  |         |              |    |                    |
+ | B  |         |   +------+   |    |                    |
+ +----|      TX +---|  2k2 |---+    |                    |
+      |         |   +------+        |                    |
+      |    GND  +-------------------+ GND                |
+      +---------+                   +--------------------+
+
+
+.fi
+.Ss Options
+.Bl -tag -offset indent -width indent
+.It Fl p Ar partno
+mandatory, device name
+.It Fl b Ar baudrate
+Set baudrate for UPDI (75000 to 1600000), default is 115200. Serial adapters
+does not allow arbitrary speed, 76800 is usualy minimal available speed.
+.It Fl D
+Disable auto erase for flash.  When the
+.It Fl e
+Causes a chip erase to be executed.  This will reset the contents of the
+FLASH and EEPROM to the value
+.It Fl F
+Disable signature verification
+.It Fl V
+Disable automatic verify check when uploading data.
+.It Fl P Ar port
+Use
+.Ar port
+to identify the device to which the programmer is attached. For example
+.Pa /dev/ttyUSB0
+.It Fl U
+This man page is incomplette, please read avrdude manual for memory
+specification and read examples below.
+
+.El
+
+
+
+STATUS
+
+\fBAVR128DA(28,32,48,64):\fP
+.nf
+(serial speed 230400)
+
+CHIP ERASE                      OK
+FLASH           read/write      OK
+EEPROM          read/write      OK
+FUSES           read/write      OK
+LOCK            read/write      OK
+USERROW         read/write      OK
+USERROW write on locked device  OK
+SIGNATURE       read            OK
+TEMPSENSE       read            OK
+SERIAL          read            OK
+.fi
+
+You can read all supported memory names inclusive aliases for fuses etc.
+by running:
+
+\fB upditool -p avr128da32 -P /dev/null -U help::: \fP
+
+Speed:
+
+FLASH 64kiB write - about 18 seconds, verify 64kiB - about 10 seconds
+FLASH 128kiB read - about 20 seconds
+
+
+
+\fBATmega4808/4809\fP (untested but may work on ATmega3208/3209):
+.nf
+(serial speed 115200)
+
+CHIP ERASE                      OK
+FLASH           read/write      unstable
+EEPROM          read/write      OK
+FUSES           read/write      OK
+LOCK            read/write      OK
+USERROW         read/write      OK
+USERROW write on locked device  not supported/planed
+SIGNATURE       read            OK
+TEMPSENSE       read            OK
+SERIAL          read            OK
+OSC16ERR3V      read            OK
+OSC16ERR5V      read            OK
+OSC20ERR3V      read            OK
+OSC20ERR5V      read            OK
+.fi
+
+unstable - working for me at 76800, but at 115200 sometime response from UPDI is lost
+
+You can read all supported memory names inclusive aliases for fuses etc.
+by running:
+
+\fB upditool -p mega4808 -P /dev/null -U help::: \fP
+
+
+Examples:
+
+read flash into file flash.bin (raw)
+.br
+\fBupditool-U flash:r:flash.bin:r -p avr128da32 -P /dev/ttyUSB2\fP
+
+read eeprom into file eeprom.bin (raw):
+.br
+\fBupditool-U eeprom:r:eeprom.bin:r -p avr128da32 -P /dev/ttyUSB2\fP
+
+read eeprom into file eeprom.hex (intel hex)
+.br
+\fBupditool-U eeprom:r:eeprom.hex:i -p avr128da32 -P /dev/ttyUSB2\fP
+
+read signature (to display as hexdump, 3 bytes)
+.br
+\fBupditool-U signature:r:-:h -p avr128da32 -P /dev/ttyUSB2\fP
+
+.brread serial into file serial.bin (raw. device dependent size)
+\fBupditool-U serial:r:serial.bin:r -p avr128da32 -P /dev/ttyUSB2\fP
+
+.br
+read userrow into file userrow.bin (raw. device dependent size)
+\fBupditool-U usersig:r:userrow.bin:r -p avr128da32 -P /dev/ttyUSB2\fP
+or
+.br
+\fBupditool-U userrow:r:userrow.bin:r -p avr128da32 -P /dev/ttyUSB2\fP
+
+write userrow (only 1st two bytes) from command line immediete arguments
+.br
+\fBupditool -p avr128da32 -P /dev/ttyUSB2 -U userrow:w:0x55,0xaa:m\fP
+
+read lock byte(s) into file lock.bin (raw. device dependent size)
+.br
+\fBupditool -U lock:r:lock.bin:r -p avr128da32 -P /dev/ttyUSB2 -b 115200\fP
+
+
+multiple memories read:
+.br
+\fBupditool -U signature:v:0x1e,0x97,0x09:m -U serial:r:/dev/null:h
+                -U eeprom:r:-:h -U TEMPSENSE0:r:-:h -U TEMPSENSE1:r:-:h
+                -U lock:r:-:h -U userrow:r:-:h
+                -p avr128da32 -P /dev/ttyUSB2\fP
+
+lock device
+.br
+\fBupditool -p avr128da32 -P /dev/ttyUSB2 -U lock0:w:0x00:m\fP
+
