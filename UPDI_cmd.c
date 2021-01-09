@@ -33,88 +33,90 @@
 
 // -1 error
 // 0..255 return value
-int
-UPDI_cmd_LDCS (uint8_t addr)
+int UPDI_cmd_LDCS(uint8_t addr)
 {
-  uint8_t cmd[2];
-  uint8_t reply[5];
-  int ret;
+	uint8_t cmd[2];
+	uint8_t reply[5];
+	int ret;
+	int i;
 
-  if (addr > 13)
-    {
-      fprintf (stderr, "Internal error\n");
-      exit (1);
-    }
-  cmd[0] = 0x55;
-  cmd[1] = 0x80 | (addr & 0xf);
+	if (addr > 13) {
+		fprintf(stderr, "Internal error\n");
+		exit(1);
+	}
+	cmd[0] = 0x55;
+	cmd[1] = 0x80 | (addr & 0xf);
 
-  ret = updi_transaction (cmd, 2, reply, 4, T_NORMAL);
-  if (ret != 3)
-    {
-      fprintf (stderr,
-	       "[%s] updi transaction failed, register %d, returned %d chars, expected 3 chars\n",
-	       __FUNCTION__, addr, ret);
-      return -1;
-    }
-  return reply[2];
+	ret = updi_transaction(cmd, 2, reply, 4, T_NORMAL);
+	if (ret != 3) {
+		fprintf(stderr,
+			"[%s] updi transaction failed, register %d, returned %d chars, expected 3 chars\n[",
+			__FUNCTION__, addr, ret);
+		for (i = 0; i < ret; i++) {
+			fprintf(stderr, "%02x ", reply[i]);
+		}
+		fprintf(stderr, "]\n");
+		return -1;
+	}
+	return reply[2];
 }
 
 // -1 error
 // 0 OK
-int
-UPDI_cmd_STCS (uint8_t addr, uint8_t data)
+int UPDI_cmd_STCS(uint8_t addr, uint8_t data)
 {
-  uint8_t cmd[3];
-  uint8_t reply[5];
-  int ret;
+	uint8_t cmd[3];
+	uint8_t reply[5];
+	int ret;
+	int i;
 
-  if (addr > 13)
-    {
-      fprintf (stderr, "Internal error\n");
-      exit (1);
-    }
+	if (addr > 13) {
+		fprintf(stderr, "Internal error\n");
+		exit(1);
+	}
 
-  cmd[0] = 0x55;
-  cmd[1] = 0xc0 | (addr & 0xf);
-  cmd[2] = data;
+	cmd[0] = 0x55;
+	cmd[1] = 0xc0 | (addr & 0xf);
+	cmd[2] = data;
 
-  ret = updi_transaction (cmd, 3, reply, 4, T_NORMAL);
-  if (ret != 3)
-    {
-      fprintf (stderr,
-	       "[%s] updi transaction failed, returned %d chars, expected 3 chars\n",
-	       __FUNCTION__, ret);
-      return -1;
-    }
+	ret = updi_transaction(cmd, 3, reply, 4, T_NORMAL);
+	if (ret != 3) {
+		fprintf(stderr,
+			"[%s] updi transaction failed, returned %d chars, expected 3 chars\n[",
+			__FUNCTION__, ret);
+		for (i = 0; i < ret; i++) {
+			fprintf(stderr, "%02x ", reply[i]);
+		}
+		fprintf(stderr, "]\n");
+		return -1;
+	}
+	// after STCS - do reread register, there is no ACK and we need to check if
+	// device received this command...
 
-  // after STCS - do reread register, there is no ACK and we need to check if 
-  // device received this command...
+	// exceptions:
+	// register 8 (ASI Reset Request)
+	if (addr == 8)
+		return 0;
+	// register 3, UPDI reset
+	if ((addr == 3) && (data & 4))
+		return 0;
+	// asi key status, there is write into this reg after userrow programming.. ignore reread here
+	if (addr == 7)
+		return 0;
+	// clock ..
+	if (addr == 9)
+		return 0;
 
-  // exceptions:
-  // register 8 (ASI Reset Request)
-  if (addr == 8)
-    return 0;
-  // register 3, UPDI reset
-  if ((addr == 3) && (data & 4))
-    return 0;
-  // asi key status, there is write into this reg after userrow programming.. ignore reread here  
-  if (addr == 7)
-    return 0;
-  // clock .. 
-  if (addr == 9)
-    return 0;
-
-  ret = UPDI_cmd_LDCS (addr);
-  if (ret < 0)
-    return ret;
-  if (ret != data)
-    {
-      fprintf (stderr, "[%s] Data=%02x reread=%02x\n", __FUNCTION__, data,
-	       ret);
-      return -1;
-    }
-  return 0;
+	ret = UPDI_cmd_LDCS(addr);
+	if (ret < 0)
+		return ret;
+	if (ret != data) {
+		fprintf(stderr, "[%s] Data=%02x reread=%02x\n", __FUNCTION__, data, ret);
+		return -1;
+	}
+	return 0;
 }
+/* *INDENT-OFF* */
 
 
 int
@@ -632,3 +634,4 @@ UPDI_NVM_enable ()
   ret = UPDI_wait_NVMPROG ();
   return ret;
 }
+/* *INDENT-ON* */

@@ -1,3 +1,9 @@
+upditool (1.1-1) UNRELEASED; urgency=medium
+
+  * Windows support
+
+ -- popovec <popovec.peter@gmail.com>  Sat, 09 Jan 2021 12:17:31 +0100
+
 upditool (1.0-1) unstable; urgency=medium
 
   * Initial release

@@ -64,11 +64,11 @@ To list supported devices use:
 
 ### read flash into file flash.bin (raw)
 
-    upditool-U flash:r:flash.bin:r -p avr128da32 -P /dev/ttyUSB2
+    upditool -U flash:r:flash.bin:r -p avr128da32 -P /dev/ttyUSB2
 
 ### read eeprom into file eeprom.hex (intel hex):
 
-    upditool-U eeprom:r:eeprom.bin:i -p avr128da32 -P /dev/ttyUSB2
+    upditool -U eeprom:r:eeprom.bin:i -p avr128da32 -P /dev/ttyUSB2
 
 ### write userrow (only 1st two bytes) from command line immediete arguments
 
@@ -99,6 +99,19 @@ copy "upditool" to your favorite directory for local executables
 fakeroot debian/rules binary
 
 then install package
+
+### WIN 10
+
+The preferred method is compilation in a Linux environment or you can use WSL.
+https://docs.microsoft.com/en-us/windows/wsl/install-win10
+
+Please install packages and run compilation:
+
+	apt install git make mingw-w64
+	git clone https://github.com/popovec/upditool
+	cd upditool
+	make upditool.exe
+
 
 *************************************************************************
 I wrote this software,  because support for AVR DA devices is incomplete in 
