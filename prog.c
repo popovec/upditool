@@ -748,7 +748,9 @@ run_prog (struct prog *prog)
 {
   int ret;
 
-  updi_serial_init (prog->serial_port);
+	if (0 != updi_serial_init (prog->serial_port))
+		return 1;
+
 
   for (;;)
     {

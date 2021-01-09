@@ -23,8 +23,6 @@ helpers.o:	helpers.c helpers.h
 upditool.o:	upditool.c UPDI_ll.h UPDI_cmd.h device_avr.h helpers.h prog.h
 		$(CC) -Wall upditool.c -c -o upditool.o
 
-getline.o:	getline.c
-		$(CC) -Wall getline.c -c -o getline.o
 
 upditool:	upditool.o UPDI_ll.o UPDI_cmd.o prog.o helpers.o prog_D.o prog_mega0.o
 		$(CC) -Wall UPDI_ll.o UPDI_cmd.o upditool.o prog.o prog_D.o prog_mega0.o helpers.o -g -o upditool
@@ -33,8 +31,14 @@ install:	upditool
 		mkdir -p $(DESTDIR)/usr/bin/
 		cp upditool $(DESTDIR)/usr/bin/
 
+
+upditool.exe:	getline.c helpers.c prog_mega0.c prog_D.c UPDI_ll_win.c UPDI_cmd.c  prog.c upditool.c helpers.h prog_mega0.h prog.h prog_D.h UPDI_ll.h UPDI_cmd.h
+	i686-w64-mingw32-gcc getline.c helpers.c prog_mega0.c prog_D.c UPDI_ll_win.c UPDI_cmd.c  prog.c upditool.c  -o upditool.exe
+
+
 clean:
 	rm -f *~
 	rm -f *.o
 	rm -f upditool
-		
+	rm -f upditool.exe
+

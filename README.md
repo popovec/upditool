@@ -54,7 +54,6 @@ To list supported devices use:
 ### No TINY0/1 devices support for now
     (due missing specifications in device_avr.h)
     
-### No WIN executable for now
 
 *************************************************************************
 
@@ -64,11 +63,11 @@ To list supported devices use:
 
 ### read flash into file flash.bin (raw)
 
-    upditool-U flash:r:flash.bin:r -p avr128da32 -P /dev/ttyUSB2
+    upditool -U flash:r:flash.bin:r -p avr128da32 -P /dev/ttyUSB2
 
 ### read eeprom into file eeprom.hex (intel hex):
 
-    upditool-U eeprom:r:eeprom.bin:i -p avr128da32 -P /dev/ttyUSB2
+    upditool -U eeprom:r:eeprom.bin:i -p avr128da32 -P /dev/ttyUSB2
 
 ### write userrow (only 1st two bytes) from command line immediete arguments
 
@@ -79,7 +78,7 @@ To list supported devices use:
     upditool -U signature:v:0x1e,0x97,0x09:m -U serial:r:/dev/null:h
                 -U eeprom:r:-:h -U TEMPSENSE0:r:-:h -U TEMPSENSE1:r:-:h
                 -U lock:r:-:h -U userrow:r:-:h
-                -p avr128da32 -P /dev/ttyUSB2\fP
+                -p avr128da32 -P /dev/ttyUSB2
 
 ### lock device
 
@@ -99,6 +98,19 @@ copy "upditool" to your favorite directory for local executables
 fakeroot debian/rules binary
 
 then install package
+
+### WIN 10
+
+The preferred method is compilation in a Linux environment or you can use WSL.
+https://docs.microsoft.com/en-us/windows/wsl/install-win10
+
+Please install packages and run compilation:
+
+	apt install git make mingw-w64
+	git clone https://github.com/popovec/upditool
+	cd upditool
+	make upditool.exe
+
 
 *************************************************************************
 I wrote this software,  because support for AVR DA devices is incomplete in 
