@@ -1,4 +1,31 @@
-// windows code (based on https://www.xanthium.in/Serial-Port-Programming-using-Win32-API)
+/*
+    UPDI_ll_win.c
+
+    This is part of c_updi, programmer
+
+    Copyright (C) 2021 Peter Popovec, popovec.peter@gmail.com
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    UPDI low level - serial port (TTL USB serial converter i.e CH340, CP2102
+    windows driver
+
+*/
+/* windows code based on
+ * https://www.xanthium.in/Serial-Port-Programming-using-Win32-API
+ */
+
 #include<windows.h>
 #include<stdio.h>
 #include <stdint.h>
@@ -6,11 +33,54 @@
 HANDLE hComm;
 DCB dcbSerialParams;
 COMMTIMEOUTS ctmo;
+int updi_speed;
+
+/*@	\brief set serial speed
+ *
+ *	\param[int] speed  serial speed (115200.. 230400
+ *	\return 	   0 error,
+ *                         1 OK
+ */
+
+int updi_set_speed(int speed)
+{
+	uint8_t multiplier;
+	switch (speed) {
+	case (115200):
+		dcbSerialParams.BaudRate = CBR_115200;
+		break;
+	case (230400):
+		dcbSerialParams.BaudRate = 230400;
+		break;
+	default:
+		fprintf(stderr, "Unsupported speed\n");
+		return 1;
+	}
+	if (0 == SetCommState(hComm, &dcbSerialParams))
+		return 1;
+
+	updi_speed = speed;
+	multiplier = (uint8_t) ceil((float)100000 / speed);
+	ctmo.ReadIntervalTimeout = 20 * multiplier;
+	ctmo.ReadTotalTimeoutMultiplier = 1 * multiplier;
+	ctmo.ReadTotalTimeoutConstant = 100 * multiplier;
+	ctmo.WriteTotalTimeoutMultiplier = 1;
+	ctmo.WriteTotalTimeoutConstant = 1;
+	if (0 == SetCommTimeouts(hComm, &ctmo))
+		return 1;
+	return 0;
+}
+
+/*@	\brief initialize serial port
+ *
+ *	\param[uint8_t *] serial   serial port name i.e. "com3"
+ *	\return                    1 error,
+ *                                 0 OK
+ */
 
 int updi_serial_init(char *serial)
 {
 	char comname[256];
-	uint8_t multiplier;
 
 	if (strlen(serial) > 200)
 		return 1;
@@ -46,14 +116,8 @@ int updi_serial_init(char *serial)
 
 	if (!SetCommState(hComm, &dcbSerialParams))
 		return 1;
-
-	multiplier = (uint8_t) ceil((float)100000 / 115200);
-	ctmo.ReadIntervalTimeout = 20 * multiplier;
-	ctmo.ReadTotalTimeoutMultiplier = 1 * multiplier;
-	ctmo.ReadTotalTimeoutConstant = 100 * multiplier;
-	ctmo.WriteTotalTimeoutMultiplier = 1;
-	ctmo.WriteTotalTimeoutConstant = 1;
-	SetCommTimeouts(hComm, &ctmo);
+	if (updi_set_speed(115200))
+		return 1;
 	printf("serial port OK\n");
 	return 0;
 }
@@ -64,24 +128,21 @@ void updi_serial_close()
 		CloseHandle(hComm);
 }
 
-// fixed serial speed..
-int updi_set_speed(int speed)
-{
-	if (speed != 115200)
-		return 1;
-	return 0;
-}
+/*@	\brief initialie UPDI (break)
+ *
+ *	\return                    1 error,
+ *                                 0 OK
+ */
 
 int updi_send_break()
 {
 	char b[] = { 0, 0 };
 	DWORD dwNoOfBytesWritten = 0;
-	printf("speed  (300)\n");
 
 	dcbSerialParams.BaudRate = CBR_300;
 	if (0 == SetCommState(hComm, &dcbSerialParams))
 		return 1;
-	printf("sending break\n");
+
 	WriteFile(hComm, b, 2, &dwNoOfBytesWritten, NULL);
 
 	// check return code from WriteFile ? or this is enough ?
@@ -90,10 +151,8 @@ int updi_send_break()
 
 	Sleep(80);
 	PurgeComm(hComm, PURGE_RXCLEAR);
-	dcbSerialParams.BaudRate = CBR_115200;
-	if (!SetCommState(hComm, &dcbSerialParams))
+	if (updi_set_speed(updi_speed))
 		return 1;
-	printf("restored state (115200)\n");
 
 	Sleep(1);
 	return 0;
