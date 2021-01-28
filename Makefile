@@ -33,7 +33,7 @@ install:	upditool
 
 
 upditool.exe:	getline.c helpers.c prog_mega0.c prog_D.c UPDI_ll_win.c UPDI_cmd.c  prog.c upditool.c helpers.h prog_mega0.h prog.h prog_D.h UPDI_ll.h UPDI_cmd.h
-	i686-w64-mingw32-gcc getline.c helpers.c prog_mega0.c prog_D.c UPDI_ll_win.c UPDI_cmd.c  prog.c upditool.c  -o upditool.exe
+	i686-w64-mingw32-gcc -O3 getline.c helpers.c prog_mega0.c prog_D.c UPDI_ll_win.c UPDI_cmd.c  prog.c upditool.c  -o upditool.exe
 
 
 clean:
